@@ -1,3 +1,8 @@
+const DEFAULT_HTML_SERVER = 'https://comntr.github.io';
+const WATCHLIST_PAGE = '/watchlist';
+const COMMENTS_PAGE = '/';
+const MENU_ID_WATCHLIST = 'watchlist';
+const MENU_ID_COMMENTS = 'comments';
 const DEFAULT_DATA_SERVER = 'https://comntr.live:42751';
 const TAB_UPDATE_DELAY = 1000; // ms
 
@@ -8,10 +13,7 @@ let tabUpdateTimer = 0;
 
 chrome.runtime.onInstalled.addListener(() => {
   log('onInstalled');
-
-  chrome.storage.sync.set({ color: '#3aa757' }, () => {
-    log("The color is green.");
-  });
+  amendContextMenu();
 
   chrome.tabs.onCreated.addListener((...args) => {
     log('onCreated:', ...args);
@@ -27,6 +29,46 @@ chrome.runtime.onInstalled.addListener(() => {
     scheduleCurrentTabStatusUpdate();
   });
 });
+
+function amendContextMenu() {
+  chrome.contextMenus.create({
+    id: MENU_ID_WATCHLIST,
+    title: 'Open watchlist',
+    contexts: ['browser_action'],
+  });
+
+  chrome.contextMenus.create({
+    id: MENU_ID_COMMENTS,
+    title: 'See all comments',
+    contexts: ['browser_action'],
+  });
+
+  let handlers = {
+    [MENU_ID_WATCHLIST]: handleWatchMenuItemClick,
+    [MENU_ID_COMMENTS]: handleCommentsMenuItemClick,
+  };
+
+  chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+    log('Context menu clicked:', info);
+    log('Current tab:', tab.url);
+    let handler = handlers[info.menuItemId];
+    handler(tab);
+  });
+}
+
+async function handleCommentsMenuItemClick(tab) {
+  let srv = await getHtmlServer()
+  let url = srv + '#' + tab.url;
+  log('Opening comments:', url);
+  chrome.tabs.create({ url });
+}
+
+async function handleWatchMenuItemClick() {
+  let srv = await getHtmlServer()
+  let url = srv + WATCHLIST_PAGE;
+  log('Opening watchlist:', url);
+  chrome.tabs.create({ url });
+}
 
 function scheduleCurrentTabStatusUpdate() {
   log('Scheduling tab update.');
@@ -172,6 +214,16 @@ async function getDataServer() {
       dataServer: DEFAULT_DATA_SERVER,
     }, res => {
       resolve(res.dataServer);
+    });
+  });
+}
+
+async function getHtmlServer() {
+  return new Promise(resolve => {
+    chrome.storage.sync.get({
+      htmlServer: DEFAULT_HTML_SERVER,
+    }, res => {
+      resolve(res.htmlServer);
     });
   });
 }
