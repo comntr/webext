@@ -1,0 +1,28 @@
+{
+  "name": "Comntr",
+  "description": "Post comments to any URL.",
+  "version": "1.0",
+  "manifest_version": 2,
+  "icons": {
+    "128": "icons/128.png",
+    "48": "icons/48.png",
+    "16": "icons/16.png"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": false
+  },
+  "browser_action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "scripts": [
+      "background.js"
+    ],
+    "persistent": false
+  },
+  "permissions": [
+    "tabs",
+    "storage"
+  ]
+}
