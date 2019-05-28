@@ -4,7 +4,7 @@ const $ = selector => document.querySelector(selector);
 
 getCurrentTab().then(async tab => {
   let srv = await getHtmlServer();
-  let url = srv + '#' + tab.url;
+  let url = srv + '?ext=1#' + tab.url;
   $('iframe').src = url;
 });
 

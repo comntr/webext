@@ -94,11 +94,12 @@ async function updateCurrentTabStatus() {
     let hash = await sha1(tab.url);
     log('sha1:', hash);
     let host = await getDataServer();
-    let url = host + '/' + hash + '/size';
-    log('GET', url);
-    let rsp = await fetch(url);
+    let url = host + '/rpc/GetCommentsCount';
+    log('POST', url);
+    let body = JSON.stringify([hash]);
+    let rsp = await fetch(url, { method: 'POST', body });
     log(rsp.status, rsp.statusText);
-    let size = parseInt(await rsp.text());
+    let [size] = await rsp.json();
     log('size:', size);
 
     await setBadgeText({
