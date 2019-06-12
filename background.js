@@ -120,6 +120,7 @@ async function updateCurrentTabStatus() {
     if (diff > 0) log('Tab update has taken', diff, 'ms');
   } catch (err) {
     log.error(err);
+    setIconColor([0x80, 0x80, 0]);
   }
 }
 
@@ -254,9 +255,9 @@ function sha1(str) {
 async function getDataServer() {
   return new Promise(resolve => {
     chrome.storage.sync.get({
-      dataServer: DEFAULT_DATA_SERVER,
-    }, res => {
-      resolve(res.dataServer);
+      dataServer: null,
+    }, (res = {}) => {
+      resolve(res.dataServer || DEFAULT_DATA_SERVER);
     });
   });
 }
@@ -264,9 +265,9 @@ async function getDataServer() {
 async function getHtmlServer() {
   return new Promise(resolve => {
     chrome.storage.sync.get({
-      htmlServer: DEFAULT_HTML_SERVER,
-    }, res => {
-      resolve(res.htmlServer);
+      htmlServer: null,
+    }, (res = {}) => {
+      resolve(res.htmlServer || DEFAULT_HTML_SERVER);
     });
   });
 }

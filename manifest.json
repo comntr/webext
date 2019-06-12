@@ -22,6 +22,7 @@
     "persistent": false
   },
   "permissions": [
+    "https://comntr.live:42751/*",
     "contextMenus",
     "tabs",
     "storage"

@@ -22,9 +22,9 @@ async function getCurrentTab() {
 async function getHtmlServer() {
   return new Promise(resolve => {
     chrome.storage.sync.get({
-      htmlServer: DEFAULT_HTML_SERVER,
+      htmlServer: null,
     }, res => {
-      resolve(res.htmlServer);
+      resolve(res && res.htmlServer || DEFAULT_HTML_SERVER);
     });
   });
 }
