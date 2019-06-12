@@ -1,15 +1,17 @@
 const DEFAULT_HTML_SERVER = 'https://comntr.github.io';
+const DEFAULT_DATA_SERVER = 'https://comntr.live:42751';
 const WATCHLIST_PAGE = '/watchlist';
 const COMMENTS_PAGE = '/';
 const MENU_ID_WATCHLIST = 'watchlist';
 const MENU_ID_COMMENTS = 'comments';
-const DEFAULT_DATA_SERVER = 'https://comntr.live:42751';
 const TAB_UPDATE_DELAY = 1000; // ms
+const ICON_URL = 'icons/16.png';
 
 const log = (...args) => console.log(...args);
 log.error = (...args) => console.error(...args);
 
 let tabUpdateTimer = 0;
+let iconImageData = null;
 
 chrome.runtime.onInstalled.addListener(() => {
   log('onInstalled');
@@ -80,6 +82,7 @@ function scheduleCurrentTabStatusUpdate() {
 
 async function updateCurrentTabStatus() {
   try {
+    let time = Date.now();
     log('Getting the current tab.');
     let tab = await getCurrentTab();
     log('tab:', tab.id, tab.url);
@@ -103,12 +106,18 @@ async function updateCurrentTabStatus() {
     log('size:', size);
 
     await setBadgeText({
-      title: size == 1 ? '1 comment' : size > 0 ? size + ' comments' : 'No comments yet',
-      text: size > 999 ? '1K+' : size + '',
-      color: size > 0 ? '#080' : '#000',
+      title: size == 1 ? '1 comment' : size > 0 ? size + ' comments' : 'Add a comment to this site',
+      text: size > 999 ? '1K+' : size > 0 ? size + '' : '',
+      color: '#444',
       tabId: tab.tabId,
     });
-    // updateIcon(size);
+
+    await setIconColor(size > 0 ?
+      [0, 0x80, 0] :
+      [0, 0x00, 0]);
+
+    let diff = Date.now() - time;
+    if (diff > 0) log('Tab update has taken', diff, 'ms');
   } catch (err) {
     log.error(err);
   }
@@ -166,30 +175,63 @@ async function getCurrentTab() {
   });
 }
 
-function updateIcon(size) {
-  let icon = size > 0 ? makeIcon(size + '', '#080') :
-    makeIcon('0', '#444');
-  chrome.browserAction.setIcon({
-    imageData: icon
+function loadDefaultIconImageData() {
+  if (iconImageData)
+    return Promise.resolve(iconImageData);
+
+  return new Promise((resolve, reject) => {
+    let img = document.createElement('img');
+    let canvas = document.createElement('canvas');
+    img.src = chrome.runtime.getURL(ICON_URL);
+    img.onerror = reject;
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      let ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      iconImageData = ctx.getImageData(0, 0, img.width, img.height);
+      resolve(iconImageData);
+    };
   });
 }
 
-function makeIcon(label, color) {
-  var canvas = document.createElement('canvas');
-  canvas.width = 19;
-  canvas.height = 19;
+async function setIconColor([r, g, b]) {
+  let iconImageData = await loadDefaultIconImageData();
+  let w = iconImageData.width;
+  let h = iconImageData.height;
+  let canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  let newContext = canvas.getContext('2d');
+  let newImageData = newContext.getImageData(0, 0, w, h);
+  let rgba = newImageData.data;
 
-  var context = canvas.getContext('2d');
-  context.fillStyle = color;
-  context.fillRect(0, 0, 19, 19);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let p = (y * w + x) * 4;
+      let a = iconImageData.data[p + 3];
+      if (a > 0) {
+        rgba[p + 0] = r;
+        rgba[p + 1] = g;
+        rgba[p + 2] = b;
+        rgba[p + 3] = a;
+      }
+    }
+  }
 
-  context.fillStyle = "#fff";
-  context.textAlign = "center";
-  context.textBaseline = "middle";
-  context.font = "bold 11px Arial";
-  context.fillText(label, 9, 10);
+  newContext.putImageData(newImageData, 0, 0);
 
-  return context.getImageData(0, 0, 19, 19);
+  await new Promise((resolve, reject) => {
+    chrome.browserAction.setIcon({
+      imageData: newImageData,
+    }, (res, err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(res);
+      }
+    });
+  });
 }
 
 function sha1(str) {
