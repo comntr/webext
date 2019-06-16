@@ -43,7 +43,9 @@ The database server doesn't see the original URLs and uses their SHA1 instead:
 ```
 
 The advantage of the `<iframe>` approach is that the comments can be viewed in a separate tab:
-- https://comntr.github.io/#http://example.com/ 
+
+- https://comntr.github.io/#http://example.com/
+
 The extension merely renders this page in the popup.
 
 Involved components:
