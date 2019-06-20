@@ -2,6 +2,11 @@ const DEFAULT_HTML_SERVER = 'https://comntr.github.io';
 
 const $ = selector => document.querySelector(selector);
 
+setTimeout(() => {
+  if ('orientation' in window)
+    document.body.classList.add('mobile');
+});
+
 getCurrentTab().then(async tab => {
   let srv = await getHtmlServer();
   let url = srv + '?ext=1#' + tab.url;

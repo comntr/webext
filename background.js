@@ -1,3 +1,4 @@
+const WEBEXT_NAME = 'Comntr';
 const DEFAULT_HTML_SERVER = 'https://comntr.github.io';
 const DEFAULT_DATA_SERVER = 'https://comntr.live:42751';
 const WATCHLIST_PAGE = '/watchlist';
@@ -8,14 +9,15 @@ const TAB_UPDATE_DELAY = 1000; // ms
 const ICON_URL = 'icons/16.png';
 
 const log = (...args) => console.log(...args);
-log.error = (...args) => console.error(...args);
+log.i = (...args) => console.log(...args);
+log.w = (...args) => console.warn(...args);
+log.e = (...args) => console.error(...args);
 
 let tabUpdateTimer = 0;
 let iconImageData = null;
 
 chrome.runtime.onInstalled.addListener(() => {
   log('onInstalled');
-  amendContextMenu();
 
   chrome.tabs.onCreated.addListener((...args) => {
     log('onCreated:', ...args);
@@ -30,9 +32,16 @@ chrome.runtime.onInstalled.addListener(() => {
     log('onActivated:', info.tabId);
     scheduleCurrentTabStatusUpdate();
   });
+
+  amendContextMenu();
 });
 
 function amendContextMenu() {
+  if (!chrome.contextMenus) {
+    log.w('No contextMenus API. Is this Firefox Android?');
+    return;
+  }
+
   chrome.contextMenus.create({
     id: MENU_ID_WATCHLIST,
     title: 'Open watchlist',
@@ -119,12 +128,29 @@ async function updateCurrentTabStatus() {
     let diff = Date.now() - time;
     if (diff > 0) log('Tab update has taken', diff, 'ms');
   } catch (err) {
-    log.error(err);
+    log.e(err);
     setIconColor([0x80, 0x80, 0]);
   }
 }
 
 async function setBadgeText({ title, text, color, tabId }) {
+  if (!chrome.browserAction.setBadgeText) {
+    log.w('No setBadgeText() API.');
+    await new Promise((resolve, reject) => {
+      chrome.browserAction.setTitle({
+        title: WEBEXT_NAME + (text ? ' (' + text + ')' : ''),
+        tabId: tabId,
+      }, (res, err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(res);
+        }
+      });
+    });
+    return;
+  }
+
   await new Promise((resolve, reject) => {
     chrome.browserAction.setBadgeText({
       text: text + '',
@@ -197,6 +223,11 @@ function loadDefaultIconImageData() {
 }
 
 async function setIconColor([r, g, b]) {
+  if (!chrome.browserAction.setIcon) {
+    log.w('No setIcon() API.');
+    return;
+  }
+
   let iconImageData = await loadDefaultIconImageData();
   let w = iconImageData.width;
   let h = iconImageData.height;

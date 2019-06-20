@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "zip": " rm -f comntr.xpi; zip -1 -r comntr.xpi * --exclude *.git*"
+  }
+}

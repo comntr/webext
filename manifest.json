@@ -20,11 +20,16 @@
       "background.js"
     ],
     "persistent": false
-  },
+  }, 
   "permissions": [
     "https://comntr.live:42751/*",
     "contextMenus",
     "tabs",
     "storage"
-  ]
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "webext@comntr.io"
+    }
+  }
 }
