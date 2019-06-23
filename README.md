@@ -53,6 +53,30 @@ Involved components:
 - The database server: https://github.com/comntr/http-server
 - Page that renders the comments: https://github.com/comntr/comntr.github.io
 
+# Installation
+
+For Firefox dekstop and Firefox Android use https://addons.mozilla.org/en-US/firefox/addon/comntr/. It probably works in Firefox iOS too, but I haven't checked.
+
+The extension works in Chrome too, but it's not published to the Chrome Web Store. Why? Publishing any extension there now requires (1) a phone number, to create a gmail account and (2) a credit card, supposedly to deter spammers. However the extension can be installed manually. First, copy the files to some folder:
+
+```
+mkdir -p ~/webext/comntr
+cd ~/webext/comntr
+git clone https://github.com/comntr/webext .
+```
+
+Navigate to `chrome://extensions` in Chrome and find the "Developer mode" toggle in the top right corner. Use "Load unpacked" to select the `~/webext/comntr` folder. The extension should appear on the page and its icon should appear in the top right nav bar. It may be saying that there were some errors, but those are because Chrome didn't like the Firefox-specific field in `manifest.json`:
+
+```
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "webext@comntr.io"
+    }
+  }
+```
+
+This error can be ignored.
+
 # Credits
 
 The ed25519 wasm library was taken from [nazar-pc/supercom.wasm](https://github.com/nazar-pc/supercop.wasm).
