@@ -7,6 +7,10 @@ const MENU_ID_WATCHLIST = 'watchlist';
 const MENU_ID_COMMENTS = 'comments';
 const TAB_UPDATE_DELAY = 1000; // ms
 const ICON_URL = 'icons/16.png';
+const ICON_PROGRESS = '#888';
+const ICON_ERROR = '#c00';
+const ICON_EMPTY = '#00c';
+const ICON_COMMENTS = '#0c0';
 
 const log = (...args) => console.log(...args);
 log.i = (...args) => console.log(...args);
@@ -90,12 +94,13 @@ function scheduleCurrentTabStatusUpdate() {
 }
 
 async function updateCurrentTabStatus() {
-  try {
-    let time = Date.now();
-    log('Getting the current tab.');
-    let tab = await getCurrentTab();
-    log('tab:', tab.id, tab.url);
+  let time = Date.now();
+  log('Getting the current tab.');
+  let tab = await getCurrentTab();
+  log('tab:', tab.id, tab.url);
 
+  try {
+    await setIconColor(ICON_PROGRESS, tab.tabId);
     await setBadgeText({
       title: 'Fetching comments...',
       text: '?',
@@ -121,15 +126,19 @@ async function updateCurrentTabStatus() {
       tabId: tab.tabId,
     });
 
-    await setIconColor(size > 0 ?
-      [0, 0x80, 0] :
-      [0, 0x00, 0]);
+    await setIconColor(size > 0 ? ICON_COMMENTS : ICON_EMPTY, tab.tabId);
 
     let diff = Date.now() - time;
     if (diff > 0) log('Tab update has taken', diff, 'ms');
   } catch (err) {
     log.e(err);
-    setIconColor([0x80, 0x80, 0]);
+    await setIconColor(ICON_ERROR, tab.tabId);
+    await setBadgeText({
+      title: err + '',
+      text: 'x',
+      color: '#000',
+      tabId: tab.tabId,
+    });
   }
 }
 
@@ -222,12 +231,27 @@ function loadDefaultIconImageData() {
   });
 }
 
-async function setIconColor([r, g, b]) {
+function parseCssColor(str) {
+  if (/^#[0-9a-f]{3}$/.test(str)) {
+    let r = parseInt(str[1].repeat(2), 16);
+    let g = parseInt(str[2].repeat(2), 16);
+    let b = parseInt(str[3].repeat(2), 16);
+    return [r, g, b];
+  }
+
+  log.w('Invalid CSS color:', str);
+  return [0, 0, 0];
+}
+
+async function setIconColor(csscolor, tabId) {
+  let time = Date.now();
+
   if (!chrome.browserAction.setIcon) {
     log.w('No setIcon() API.');
     return;
   }
 
+  let [r, g, b] = parseCssColor(csscolor);
   let iconImageData = await loadDefaultIconImageData();
   let w = iconImageData.width;
   let h = iconImageData.height;
@@ -256,6 +280,7 @@ async function setIconColor([r, g, b]) {
   await new Promise((resolve, reject) => {
     chrome.browserAction.setIcon({
       imageData: newImageData,
+      tabId,
     }, (res, err) => {
       if (err) {
         reject(err);
@@ -264,6 +289,9 @@ async function setIconColor([r, g, b]) {
       }
     });
   });
+
+  let diff = Date.now() - time;
+  if (diff > 10) log.w('setIconColor():', diff, 'ms');
 }
 
 function sha1(str) {
