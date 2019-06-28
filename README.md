@@ -14,10 +14,10 @@ More precisely, it attaches comments to SHA1 of the URL, to avoid leaking PII:
               |
               | 1. URL
               |
-              v                            +------------------------------+
-  +--------------------+                   | <iframe> with URL:           |
-  | This web extension | ----------------->| https://comntr.io/#<tab-url> |
-  +--------------------+                   +------------------------------+
+              v                            +-------------------------------------+
+  +--------------------+                   | <iframe> with URL:                  |
+  | This web extension | ----------------->| https://comntr.github.io/#<tab-url> |
+  +--------------------+                   +-------------------------------------+
               |                                            |
               | -> 2. GET /<sha1>/size                     |
               | <- 12 comments                             | -> 3. GET /<sha1>
@@ -78,6 +78,24 @@ Navigate to `chrome://extensions` in Chrome and find the "Developer mode" toggle
 ```
 
 This error can be ignored.
+
+# Privacy Policy
+
+This extension tries to not collect any PII. However some PII is still leaked:
+
+- The data server see your IP address. Although this IP address likely changes every time you connect to your ISP, it can still give an idea where approximately you live. The IP address isn't stored anywhere, as you can see in the data server repository.
+- The extension sees the URLs you visit. The URLs aren't sent to the data server. Instead, the extension computes SHA1 of the URL and sends the hash. The data server can theoretically precompute hashes for millions of often used URLs and know if you visit any of those URLs.
+- Every comment you send is signed with a ed25519 key. The keys are stored in the browser, in indexedDb, which is flushed to file system from time to time. Since every your comment has the same public key, it's possible to find all the comments you've sent. However you can delete the keys and the extension will generate new ones once you send a comment.
+- The extension caches most recently seen comments in indexedDb. Thus any comments that you send end up not only in the data server's file system, but also in local caches of other users who see your comments.
+
+# Roadmap
+
+A few problems need to be solved before this idea can get any meaningful adoption:
+
+- A widget that website admins can add to their sites. Obviously, they'll want control over what people write there.
+- Comments data needs to be open and federated. It should be possible to start your own data server that would join the network.
+- Subnetworks with different rules. One big space for everyone won't work because scientists won't be able to coexist with trolls and spammers. Subnetworks may have rules and moderators.
+- A way to make users spend their time (not their CPU time) to create a valid keypair that signs comments. Without this it'll be hard to stop spammers and trolls.
 
 # Credits
 
