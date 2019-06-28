@@ -2,6 +2,8 @@
 
 It's a web extension for Firefox or Chrome that allows to add comments to any URL.
 
+![](docs/screenshot.png)
+
 More precisely, it attaches comments to SHA1 of the URL, to avoid leaking PII:
 
 ```
