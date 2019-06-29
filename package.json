@@ -1,5 +1,6 @@
 {
   "scripts": {
-    "zip": "rm -f comntr.xpi; zip -1 -r comntr.xpi * --exclude *.git*"
+    "xpi": "rm -f comntr.xpi; zip -1 -r comntr.xpi * -x \"*.md\" \"docs/*\"",
+    "adb-push": "adb push comntr.xpi /mnt/sdcard/WebExt/"
   }
 }

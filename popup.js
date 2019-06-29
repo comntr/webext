@@ -5,5 +5,5 @@ setTimeout(async () => {
   iframe.src = srv + '?ext=1#' + tab.url;
 
   if ('orientation' in window)
-    document.body.classList.add('mobile');  
+    document.body.parentElement.classList.add('mobile');  
 });

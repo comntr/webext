@@ -7,7 +7,9 @@ html, body, iframe {
   height: 200pt;
 }
 
-body.mobile > iframe {
+html.mobile,
+html.mobile > body,
+html.mobile > body > iframe {
   width: 100%;
   height: 100%;
 }
