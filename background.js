@@ -1,21 +1,14 @@
 const WEBEXT_NAME = 'Comntr';
-const DEFAULT_HTML_SERVER = 'https://comntr.github.io';
-const DEFAULT_DATA_SERVER = 'https://comntr.live:42751';
+const RPC_GET_COMMENTS_COUNT = '/rpc/GetCommentsCount';
 const WATCHLIST_PAGE = '/watchlist';
 const COMMENTS_PAGE = '/';
+const BADGE_TEXT_COLOR = '#444';
+const BADGE_TEXT_COLOR_ERR = '#000';
 const MENU_ID_WATCHLIST = 'watchlist';
 const MENU_ID_COMMENTS = 'comments';
 const TAB_UPDATE_DELAY = 1000; // ms
+const TAB_UPDATE_SLOW = 50; // ms
 const ICON_URL = 'icons/16.png';
-const ICON_PROGRESS = '#888';
-const ICON_ERROR = '#c00';
-const ICON_EMPTY = '#00c';
-const ICON_COMMENTS = '#0c0';
-
-const log = (...args) => console.log(...args);
-log.i = (...args) => console.log(...args);
-log.w = (...args) => console.warn(...args);
-log.e = (...args) => console.error(...args);
 
 let tabUpdateTimer = 0;
 let iconImageData = null;
@@ -72,21 +65,20 @@ function amendContextMenu() {
 }
 
 async function handleCommentsMenuItemClick(tab) {
-  let srv = await getHtmlServer()
+  let srv = await gConfigProps.htmlServerURL.get();
   let url = srv + '#' + tab.url;
   log('Opening comments:', url);
   chrome.tabs.create({ url });
 }
 
 async function handleWatchMenuItemClick() {
-  let srv = await getHtmlServer()
+  let srv = await gConfigProps.htmlServerURL.get();
   let url = srv + WATCHLIST_PAGE;
   log('Opening watchlist:', url);
   chrome.tabs.create({ url });
 }
 
 function scheduleCurrentTabStatusUpdate() {
-  log('Scheduling tab update.');
   clearTimeout(tabUpdateTimer);
   tabUpdateTimer = setTimeout(() => {
     updateCurrentTabStatus();
@@ -95,48 +87,61 @@ function scheduleCurrentTabStatusUpdate() {
 
 async function updateCurrentTabStatus() {
   let time = Date.now();
-  log('Getting the current tab.');
   let tab = await getCurrentTab();
-  log('tab:', tab.id, tab.url);
+  log('tab:', tab.id, JSON.stringify(tab.url));
 
   try {
-    await setIconColor(ICON_PROGRESS, tab.tabId);
+    await setIconColor(
+      await gConfigProps.iconColorFetching.get(),
+      tab.tabId);
+
     await setBadgeText({
       title: 'Fetching comments...',
       text: '?',
-      color: '#444',
+      color: BADGE_TEXT_COLOR,
       tabId: tab.tabId,
     });
 
     let hash = await sha1(tab.url);
-    log('sha1:', hash);
-    let host = await getDataServer();
-    let url = host + '/rpc/GetCommentsCount';
-    log('POST', url);
+    let host = await gConfigProps.dataServerURL.get();
+    let url = host + RPC_GET_COMMENTS_COUNT;
     let body = JSON.stringify([hash]);
+    let rtime = Date.now();
+    log(RPC_GET_COMMENTS_COUNT, hash.slice(0, 7));
     let rsp = await fetch(url, { method: 'POST', body });
-    log(rsp.status, rsp.statusText);
-    let [size] = await rsp.json();
-    log('size:', size);
+    let json = await rsp.json();
+    let [size] = json;
+    log(rsp.status, rsp.statusText, JSON.stringify(json),
+      Date.now() - rtime, 'ms');
 
     await setBadgeText({
-      title: size == 1 ? '1 comment' : size > 0 ? size + ' comments' : 'Add a comment to this site',
-      text: size > 999 ? '1K+' : size > 0 ? size + '' : '',
-      color: '#444',
+      title: size == 1 ? '1 comment' :
+        size > 0 ? size + ' comments' :
+          'Add a comment to this site',
+      text: size > 999 ? '1K+' :
+        size > 0 ? size + '' :
+          '',
+      color: BADGE_TEXT_COLOR,
       tabId: tab.tabId,
     });
 
-    await setIconColor(size > 0 ? ICON_COMMENTS : ICON_EMPTY, tab.tabId);
+    await setIconColor(
+      size > 0 ?
+        await gConfigProps.iconColorHasComments.get() :
+        await gConfigProps.iconColorNoComments.get(),
+      tab.tabId);
 
     let diff = Date.now() - time;
-    if (diff > 0) log('Tab update has taken', diff, 'ms');
+    log.v('Tab update finished:', diff, 'ms');
   } catch (err) {
     log.e(err);
-    await setIconColor(ICON_ERROR, tab.tabId);
+    await setIconColor(
+      await gConfigProps.iconColorError.get(),
+      tab.tabId);
     await setBadgeText({
       title: err + '',
       text: 'x',
-      color: '#000',
+      color: BADGE_TEXT_COLOR_ERR,
       tabId: tab.tabId,
     });
   }
@@ -145,69 +150,34 @@ async function updateCurrentTabStatus() {
 async function setBadgeText({ title, text, color, tabId }) {
   if (!chrome.browserAction.setBadgeText) {
     log.w('No setBadgeText() API.');
-    await new Promise((resolve, reject) => {
+    await webextcall(callback => {
       chrome.browserAction.setTitle({
         title: WEBEXT_NAME + (text ? ' (' + text + ')' : ''),
         tabId: tabId,
-      }, (res, err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(res);
-        }
-      });
+      }, callback);
     });
     return;
   }
 
-  await new Promise((resolve, reject) => {
+  await webextcall(callback => {
     chrome.browserAction.setBadgeText({
       text: text + '',
       tabId: tabId,
-    }, (res, err) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(res);
-      }
-    });
+    }, callback);
   });
 
-  await new Promise((resolve, reject) => {
+  await webextcall(callback => {
     chrome.browserAction.setBadgeBackgroundColor({
       color: color,
       tabId: tabId,
-    }, (res, err) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(res);
-      }
-    });
+    }, callback);
   });
 
-  await new Promise((resolve, reject) => {
+  await webextcall(callback => {
     chrome.browserAction.setTitle({
       title: title,
       tabId: tabId,
-    }, (res, err) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(res);
-      }
-    });
-  });
-}
-
-async function getCurrentTab() {
-  return new Promise(resolve => {
-    chrome.tabs.query({
-      active: true,
-      currentWindow: true,
-    }, tabs => {
-      resolve(tabs[0]);
-    });
+    }, callback);
   });
 }
 
@@ -277,56 +247,13 @@ async function setIconColor(csscolor, tabId) {
 
   newContext.putImageData(newImageData, 0, 0);
 
-  await new Promise((resolve, reject) => {
+  await webextcall(callback => {
     chrome.browserAction.setIcon({
       imageData: newImageData,
       tabId,
-    }, (res, err) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(res);
-      }
-    });
+    }, callback);
   });
 
   let diff = Date.now() - time;
-  if (diff > 10) log.w('setIconColor():', diff, 'ms');
-}
-
-function sha1(str) {
-  let bytes = new Uint8Array(str.length);
-
-  for (let i = 0; i < str.length; i++)
-    bytes[i] = str.charCodeAt(i) & 0xFF;
-
-  return new Promise(resolve => {
-    crypto.subtle.digest('SHA-1', bytes).then(buffer => {
-      let hash = Array.from(new Uint8Array(buffer)).map(byte => {
-        return ('0' + byte.toString(16)).slice(-2);
-      }).join('');
-
-      resolve(hash);
-    });
-  });
-}
-
-async function getDataServer() {
-  return new Promise(resolve => {
-    chrome.storage.sync.get({
-      dataServer: null,
-    }, (res = {}) => {
-      resolve(res.dataServer || DEFAULT_DATA_SERVER);
-    });
-  });
-}
-
-async function getHtmlServer() {
-  return new Promise(resolve => {
-    chrome.storage.sync.get({
-      htmlServer: null,
-    }, (res = {}) => {
-      resolve(res.htmlServer || DEFAULT_HTML_SERVER);
-    });
-  });
+  log.v('setIconColor():', diff, 'ms');
 }

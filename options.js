@@ -1,14 +1,11 @@
-const CONFIG = {
-  htmlServer: 'https://comntr.github.io',
-  dataServer: 'https://comntr.live:42751',
-};
-
 const $ = selector => document.querySelector(selector);
-const log = (...args) => console.log(...args);
+const $$ = selector => document.querySelectorAll(selector);
 
-log.status = (...args) => {
-  log(...args);
-  $('#status').textContent = args.join(' ');
+const status = {
+  set(...args) {
+    log(...args);
+    $('#status').textContent = args.join(' ');
+  }
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -17,30 +14,40 @@ document.addEventListener('DOMContentLoaded', () => {
   $('#save').onclick = () => saveConfig();
 });
 
-function saveConfig() {
-  log.status('Collecting config values.');
-  let values = {};
+async function saveConfig() {
+  status.set('Collecting config values.');
+  let trows = $$('#config tr');
 
-  for (let id in CONFIG) {
-    let el = $('#' + id);
-    values[id] = el.value;
+  for (let tr of trows) {
+    let td = tr.querySelector('td:last-child');
+    let name = tr.getAttribute('prop');
+    let prop = gConfigProps[name];
+    let newValue = td.textContent;
+    let value = await prop.get();
+    
+    if (newValue != value) {
+      log.i(prop.name, '=', newValue);
+      await prop.set(newValue);
+    }
   }
 
-  log.status('Saving config.');
-  chrome.storage.sync.set(values, () => {
-    log.status('Config saved.');
-  });
+  status.set('Config saved.');
 }
 
-function loadConfig() {
-  log.status('Loading config.');
-  chrome.storage.sync.get(CONFIG, values => {
-    log.status('Got config:', values);
-    for (let id in CONFIG) {
-      let value = values[id];
-      let el = $('#' + id);
-      if (el) el.value = value;
-      if (!el) log('No such element:', id);
-    }
-  });
+async function loadConfig() {
+  status.set('Loading config.');
+  let tbody = $('#config tbody');
+
+  for (let name in gConfigProps) {
+    let prop = gConfigProps[name];
+    let value = await prop.get();
+    log.i(prop.name, ':', value);
+    tbody.innerHTML += `
+      <tr prop="${name}">
+        <td>${prop.name}</td>
+        <td contenteditable spellcheck=false>${value}</td>
+      </tr>`;
+  }
+
+  status.set('Config loaded.');
 }

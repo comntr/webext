@@ -1,4 +1,19 @@
 body {
   font-family: Ubuntu, Arial, sans-serif;
-  font-size: 10pt;
+  font-size: 14pt;
+  width: 100%;
+  margin: 0;
+}
+
+#config {
+  width: 100%;
+}
+
+#config td:first-child {
+  font-weight: bold;
+  width: 10em;
+}
+
+#config tr:nth-child(2n+1) {
+  background: #ccf;
 }
