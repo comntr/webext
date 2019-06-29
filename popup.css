@@ -1,14 +1,10 @@
-html, body {
+html, body, iframe {
   padding: 0;
   margin: 0;
-  width: 100%;
-  height: 100%;
-}
-
-body > iframe {
   border: none;
-  width: 400pt;
-  height: 300pt;
+  overflow: hidden;
+  width: 300pt;
+  height: 200pt;
 }
 
 body.mobile > iframe {
