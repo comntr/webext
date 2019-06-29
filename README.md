@@ -101,4 +101,4 @@ A few problems need to be solved before this idea can get any meaningful adoptio
 
 The ed25519 wasm library was taken from [nazar-pc/supercom.wasm](https://github.com/nazar-pc/supercop.wasm).
 
-The web extension icon was made by Chanut from [www.flaticon.com](https://www.flaticon.com/free-icon/share_181551).
+The icon was made by Freepik from [www.flaticon.com](https://www.flaticon.com/free-icon/world_523491).
