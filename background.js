@@ -15,22 +15,21 @@ let iconImageData = null;
 
 chrome.runtime.onInstalled.addListener(() => {
   log('onInstalled');
-
-  chrome.tabs.onCreated.addListener((...args) => {
-    log('onCreated:', ...args);
-  });
-
-  chrome.tabs.onUpdated.addListener((tabId, changes, tab) => {
-    log('onUpdated:', tabId);
-    scheduleCurrentTabStatusUpdate();
-  });
-
-  chrome.tabs.onActivated.addListener(info => {
-    log('onActivated:', info.tabId);
-    scheduleCurrentTabStatusUpdate();
-  });
-
   amendContextMenu();
+});
+
+chrome.tabs.onCreated.addListener((...args) => {
+  log('onCreated:', ...args);
+});
+
+chrome.tabs.onUpdated.addListener((tabId, changes, tab) => {
+  log('onUpdated:', tabId);
+  scheduleCurrentTabStatusUpdate();
+});
+
+chrome.tabs.onActivated.addListener(info => {
+  log('onActivated:', info.tabId);
+  scheduleCurrentTabStatusUpdate();
 });
 
 function amendContextMenu() {
@@ -120,7 +119,7 @@ async function updateCurrentTabStatus() {
           'Add a comment to this site',
       text: size > 999 ? '1K+' :
         size > 0 ? size + '' :
-          '',
+          '0',
       color: BADGE_TEXT_COLOR,
       tabId: tab.tabId,
     });

@@ -1,8 +1,35 @@
-const log = (...args) => log.v(...args);
-log.v = (...args) => console.log('D', ...args);
-log.i = (...args) => console.info('I', ...args);
-log.w = (...args) => console.warn('W', ...args);
-log.e = (...args) => console.error('E', ...args);
+const log = (...args) => log.i(...args);
+
+log.v = (...args) => {
+  log.save('D', ...args);
+  console.log('D', ...args);
+};
+
+log.i = (...args) => {
+  log.save('I', ...args);
+  console.info('I', ...args);
+};
+
+log.w = (...args) => {
+  log.save('W', ...args);
+  console.warn('W', ...args);
+};
+
+log.e = (...args) => {
+  log.save('E', ...args);
+  console.error('E', ...args);
+};
+
+log.logs = [];
+log.logs.maxlen = 4096;
+
+log.save = (tag, ...args) => {
+  let time = new Date().toISOString();
+  let text = [time, tag, ...args].join(' ');
+  log.logs.push(text);
+  if (log.logs.length > log.logs.maxlen)
+    log.logs.splice(0, 1);
+};
 
 function webextcall(fn) {
   return new Promise((resolve, reject) => {
@@ -33,7 +60,7 @@ class StorageProp {
     let props = {};
     props[this.name] = null;
     let res = await webextcall(callback =>
-      chrome.storage.sync.get(props, callback));
+      chrome.storage.local.get(props, callback));
     let value = res && res[this.name];
     return value || this.defval;
   }
@@ -42,7 +69,7 @@ class StorageProp {
     let props = {};
     props[this.name] = value;
     await webextcall(callback =>
-      chrome.storage.sync.set(props, callback));
+      chrome.storage.local.set(props, callback));
   }
 }
 
