@@ -1,7 +1,7 @@
 {
   "name": "Comntr",
   "description": "Post comments to any URL.",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "manifest_version": 2,
   "icons": {
     "128": "icons/128.png",
