@@ -1,5 +1,6 @@
 const WEBEXT_NAME = 'Comntr';
 const RPC_GET_COMMENTS_COUNT = '/rpc/GetCommentsCount';
+const POPUP_PAGE = 'popup.html';
 const WATCHLIST_PAGE = '/watchlist';
 const COMMENTS_PAGE = '/';
 const BADGE_TEXT_COLOR = '#444';
@@ -12,14 +13,33 @@ const ICON_URL = 'icons/16.png';
 
 let tabUpdateTimer = 0;
 let iconImageData = null;
+let isMobileDevice = !chrome.contextMenus;
+let handlers = {
+  [MENU_ID_WATCHLIST]: handleWatchMenuItemClick,
+  [MENU_ID_COMMENTS]: handleCommentsMenuItemClick,
+};
 
 chrome.runtime.onInstalled.addListener(() => {
-  log('onInstalled');
-  amendContextMenu();
-});
+  log('isMobileDevice?', isMobileDevice);
+  setTimeout(scheduleCurrentTabStatusUpdate, 0);
 
-chrome.tabs.onCreated.addListener((...args) => {
-  log('onCreated:', ...args);
+  if (!isMobileDevice) {
+    chrome.browserAction.setPopup({
+      popup: POPUP_PAGE
+    });
+
+    chrome.contextMenus.create({
+      id: MENU_ID_WATCHLIST,
+      title: 'Open watchlist',
+      contexts: ['browser_action'],
+    });
+  
+    chrome.contextMenus.create({
+      id: MENU_ID_COMMENTS,
+      title: 'See all comments',
+      contexts: ['browser_action'],
+    });    
+  }
 });
 
 chrome.tabs.onUpdated.addListener((tabId, changes, tab) => {
@@ -32,36 +52,18 @@ chrome.tabs.onActivated.addListener(info => {
   scheduleCurrentTabStatusUpdate();
 });
 
-function amendContextMenu() {
-  if (!chrome.contextMenus) {
-    log.w('No contextMenus API. Is this Firefox Android?');
-    return;
-  }
+chrome.browserAction.onClicked.addListener(async tab => {
+  let srv = await gConfigProps.htmlServerURL.get();
+  let url = srv + '#' + tab.url;
+  chrome.tabs.create({ url });
+});
 
-  chrome.contextMenus.create({
-    id: MENU_ID_WATCHLIST,
-    title: 'Open watchlist',
-    contexts: ['browser_action'],
-  });
-
-  chrome.contextMenus.create({
-    id: MENU_ID_COMMENTS,
-    title: 'See all comments',
-    contexts: ['browser_action'],
-  });
-
-  let handlers = {
-    [MENU_ID_WATCHLIST]: handleWatchMenuItemClick,
-    [MENU_ID_COMMENTS]: handleCommentsMenuItemClick,
-  };
-
-  chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-    log('Context menu clicked:', info);
-    log('Current tab:', tab.url);
-    let handler = handlers[info.menuItemId];
-    handler(tab);
-  });
-}
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+  log('Context menu clicked:', info);
+  log('Current tab:', tab.url);
+  let handler = handlers[info.menuItemId];
+  handler(tab);
+});
 
 async function handleCommentsMenuItemClick(tab) {
   let srv = await gConfigProps.htmlServerURL.get();
