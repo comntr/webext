@@ -30,7 +30,17 @@ When a common user sees the comments widget, comntr pulls both comments and the 
 
 Then it merges the two and displays only comments allowed by the filter. Can an advanced user just remove the `filter` param and see all the unmoderated comments? Absolutely. The goal of this system is to let the admin choose what to show on his page and only that.
 
+This is what a user sees:
+
+![](/docs/user-view.png)
+
 When the admin sees the comments, comntr uses his public key to figure out that he is the owner of this filter and can do a few things:
 - Show additional controls that can block users or comments.
 - Add new filters to `ab1...829`. A new filter is just a regular comment for `ab1...829` where the comment text contains the blocked user id and the reason why.
 - Set the *rules* for `ab1...829` so others couldn't add random filters there. All the new filters would have to be signed by the admin's private key anyway, but that would require letting everyone know who the admin is by sharing his public key in the `iframe` src. The *rules* approach is more flexible also: it allows to specify any set of moderators who can modify the filters. But how does the data server know that the admin can set the rules for this `hash`? By verifying the provided public key, tag and signature and comparing `KDF(tag, publicKey)` with the `hash`.
+
+This is what the admin of this filter sees:
+
+![](/docs/admin-view.png)
+
+
