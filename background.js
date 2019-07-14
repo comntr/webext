@@ -54,7 +54,8 @@ chrome.tabs.onActivated.addListener(info => {
 
 chrome.browserAction.onClicked.addListener(async tab => {
   let srv = await gConfigProps.htmlServerURL.get();
-  let url = srv + '#' + tab.url;
+  let params = await gConfigProps.extraUrlParams.get();
+  let url = srv + '?' + params + '#' + tab.url;
   chrome.tabs.create({ url });
 });
 
