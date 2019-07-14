@@ -7,6 +7,7 @@ const BADGE_TEXT_COLOR = '#444';
 const BADGE_TEXT_COLOR_ERR = '#000';
 const MENU_ID_WATCHLIST = 'watchlist';
 const MENU_ID_COMMENTS = 'comments';
+const MENU_ID_COMMENTS_FOR_LINK = 'link-comments';
 const TAB_UPDATE_DELAY = 1000; // ms
 const TAB_UPDATE_SLOW = 50; // ms
 const ICON_URL = 'icons/16.png';
@@ -17,6 +18,7 @@ let isMobileDevice = !chrome.contextMenus;
 let handlers = {
   [MENU_ID_WATCHLIST]: handleWatchMenuItemClick,
   [MENU_ID_COMMENTS]: handleCommentsMenuItemClick,
+  [MENU_ID_COMMENTS_FOR_LINK]: handleCommentsForLinkMenuItemClick,
 };
 
 chrome.runtime.onInstalled.addListener(() => {
@@ -33,12 +35,18 @@ chrome.runtime.onInstalled.addListener(() => {
       title: 'Open watchlist',
       contexts: ['browser_action'],
     });
-  
+
     chrome.contextMenus.create({
       id: MENU_ID_COMMENTS,
       title: 'See all comments',
       contexts: ['browser_action'],
-    });    
+    });
+
+    chrome.contextMenus.create({
+      id: MENU_ID_COMMENTS_FOR_LINK,
+      title: 'See comments for this URL',
+      contexts: ['link'],
+    });
   }
 });
 
@@ -63,14 +71,15 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   log('Context menu clicked:', info);
   log('Current tab:', tab.url);
   let handler = handlers[info.menuItemId];
-  handler(tab);
+  handler(tab, info);
 });
 
+async function handleCommentsForLinkMenuItemClick(tab, info) {
+  await openNewTabWithComments(info.linkUrl);
+}
+
 async function handleCommentsMenuItemClick(tab) {
-  let srv = await gConfigProps.htmlServerURL.get();
-  let url = srv + '#' + tab.url;
-  log('Opening comments:', url);
-  chrome.tabs.create({ url });
+  await openNewTabWithComments(tab.url);
 }
 
 async function handleWatchMenuItemClick() {
@@ -78,6 +87,15 @@ async function handleWatchMenuItemClick() {
   let url = srv + WATCHLIST_PAGE;
   log('Opening watchlist:', url);
   chrome.tabs.create({ url });
+}
+
+async function openNewTabWithComments(topic) {
+  log('Opening tab with comments for:', topic);
+  if (!topic) return;
+  let srv = await gConfigProps.htmlServerURL.get();
+  let params = await gConfigProps.extraUrlParams.get();
+  let url = srv + '?' + params + '#' + topic;
+  chrome.tabs.create({ url });  
 }
 
 function scheduleCurrentTabStatusUpdate() {
