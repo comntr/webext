@@ -79,6 +79,8 @@ Navigate to `chrome://extensions` in Chrome and find the "Developer mode" toggle
 
 This error can be ignored.
 
+See more notes in [docs/dev.md](docs/dev.md).
+
 # Privacy Policy
 
 This extension tries to not collect any PII. However some PII is still leaked:
@@ -92,10 +94,10 @@ This extension tries to not collect any PII. However some PII is still leaked:
 
 A few problems need to be solved before this idea can get any meaningful adoption:
 
-- A widget that website admins can add to their sites. Obviously, they'll want control over what people write there. Comments can be physically stored on the same data server or on their own servers.
-- Comments data needs to be open and federated. It should be possible to start your own data server that would join the network. I'm definitely not trying to grab control over all comments in the world. That wouldn't really work anyway.
-- Subnetworks with different rules. One big space for everyone won't work because scientists won't be able to coexist with trolls and spammers. Subnetworks may have rules and moderators. In practice, this will look like a few data servers that anyone can subscribe too. There will be a default server that will likely be moderated, but if someone wants to see comments from `data.sci.org`, they would switch to this server in their config.
-- A way to make users spend their time (not their CPU time!) to post comments. Without this it'll be hard to stop spammers and trolls. A simple solution might work: the auth server generates a short random number, but returns it as an SVG picture where the digits are drawn with circles or squares. It's easy for the server to generate such images and verify the answers and it's easy for humans to read this, but spammers would have to set up an ML image recognition service, which is way beyond the abilities of most spammers. To deter trolls, the SVG picture can present a basic question like "23+47". The point is to make trolls pause and think and I'd argue that those who can answer this question quickly, aren't trolls. We can raise the bar higher for a math community and present questions like "log(32)/log(2)" - a no brainer for anyone familiar with entry level math, but a hard problem for random people that want to post meaningless comments where they really shouldn't.
+- [x] A widget that website admins can add to their sites. Obviously, they'll want control over what people write there. Comments can be physically stored on the same data server or on their own servers. See https://comntr.github.io/.
+- [ ] Comments data needs to be open and federated. It should be possible to start your own data server that would join the network. I'm definitely not trying to grab control over all comments in the world. That wouldn't really work anyway.
+- [ ] Subnetworks with different rules. One big space for everyone won't work because scientists won't be able to coexist with trolls and spammers. Subnetworks may have rules and moderators. In practice, this will look like a few data servers that anyone can subscribe too. There will be a default server that will likely be moderated, but if someone wants to see comments from `data.sci.org`, they would switch to this server in their config.
+- [x] A way to make users spend their time (not their CPU time!) to post comments. Without this it'll be hard to stop spammers and trolls. A simple solution might work: the auth server generates a short random number, but returns it as an SVG picture where the digits are drawn with circles or squares. It's easy for the server to generate such images and verify the answers and it's easy for humans to read this, but spammers would have to set up an ML image recognition service, which is way beyond the abilities of most spammers. To deter trolls, the SVG picture can present a basic question like "23+47". The point is to make trolls pause and think and I'd argue that those who can answer this question quickly, aren't trolls. We can raise the bar higher for a math community and present questions like "log(32)/log(2)" - a no brainer for anyone familiar with entry level math, but a hard problem for random people that want to post meaningless comments where they really shouldn't. See https://github.com/comntr/webext/blob/master/docs/captcha.md.
 
 # Credits
 
