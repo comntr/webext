@@ -104,3 +104,7 @@ A few problems need to be solved before this idea can get any meaningful adoptio
 The ed25519 wasm library was taken from [nazar-pc/supercom.wasm](https://github.com/nazar-pc/supercop.wasm).
 
 The icon was made by Freepik from [www.flaticon.com](https://www.flaticon.com/free-icon/world_523491).
+
+# License
+
+MIT
