@@ -26,12 +26,9 @@ chrome.runtime.onInstalled.addListener(() => {
   setTimeout(scheduleCurrentTabStatusUpdate, 0);
 
   if (!isMobileDevice) {
-    // The popup can't ask for "tabs" permission
-    // without an explicit user action.
-    //
-    // chrome.browserAction.setPopup({
-    //  popup: POPUP_PAGE
-    // });
+    chrome.browserAction.setPopup({
+     popup: POPUP_PAGE
+    });
 
     chrome.contextMenus.create({
       id: MENU_ID_WATCHLIST,
@@ -65,8 +62,10 @@ chrome.tabs.onActivated.addListener(info => {
 
 chrome.browserAction.onClicked.addListener(async tab => {
   log('browserAction.onClicked:', tab.id, tab.url);
-  let granted = await requestPermissions();
-  if (!granted) return;
+  // Firefox Android refuses to show the permissions
+  // dialog here even if all async/await stuff is removed
+  // and permissions.request() is called directly here.
+  await requestPermissions();
   tab = await getCurrentTab();
   let srv = await gConfigProps.htmlServerURL.get();
   let params = await gConfigProps.extraUrlParams.get();
@@ -86,8 +85,7 @@ async function handleCommentsForLinkMenuItemClick(tab, info) {
 }
 
 async function handleCommentsMenuItemClick(tab) {
-  let granted = await requestPermissions();
-  if (!granted) return;
+  await requestPermissions();
   tab = await getCurrentTab();
   await openNewTabWithComments(tab.url);
 }
