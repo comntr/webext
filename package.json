@@ -1,6 +1,11 @@
 {
   "scripts": {
-    "xpi": "rm -f comntr.xpi; zip -1 -r comntr.xpi * -x package.json \"*.md\" \"docs/*\"",
-    "adb-push": "adb push comntr.xpi /mnt/sdcard/WebExt/"
+    "bin": "rm -rf bin; mkdir bin; rsync -a * bin --exclude-from bin-exclude.txt",
+    "xpi-prep": "rm -rf xpi; mkdir xpi; npm run bin",
+    "xpi-zip": "cd bin; zip -0r ../xpi/comntr.xpi *; cd ..",
+    "xpi-gecko-id": "node tools/gecko.id bin/manifest.json",
+    "xpi": "npm run xpi-prep; npm run xpi-gecko-id; npm run xpi-zip",
+    "xpi-prod": "npm run xpi-prep; npm run xpi-zip",
+    "adb-push": "npm run xpi; adb push xpi/comntr.xpi /mnt/sdcard/WebExt/"
   }
 }

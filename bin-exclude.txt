@@ -1,0 +1,7 @@
+bin/
+xpi/
+docs/
+tools/
+package.json
+bin-exclude.txt
+*.md

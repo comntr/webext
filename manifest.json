@@ -24,14 +24,9 @@
     ]
   }, 
   "permissions": [
-    "https://comntr.live:42751/*",
+    "https://comntr.live:*/*",
     "contextMenus",
     "tabs",
     "storage"
-  ],
-  "browser_specific_settings": {
-    "gecko": {
-      "id": "webext@comntr.io"
-    }
-  }
+  ]
 }
