@@ -39,6 +39,18 @@ function webextcall(fn) {
   });
 }
 
+async function requestPermissions() {
+  let granted = await webextcall(callback => {
+    chrome.permissions.request({
+      permissions: [
+        'tabs',
+      ],
+    }, callback);
+  });
+
+  return granted;
+}
+
 async function getCurrentTab() {
   let tabs = await webextcall(callback => {
     chrome.tabs.query({
@@ -46,7 +58,7 @@ async function getCurrentTab() {
       currentWindow: true,
     }, callback);
   });
-  
+
   return tabs[0];
 }
 

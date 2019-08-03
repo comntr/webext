@@ -26,9 +26,12 @@ chrome.runtime.onInstalled.addListener(() => {
   setTimeout(scheduleCurrentTabStatusUpdate, 0);
 
   if (!isMobileDevice) {
-    chrome.browserAction.setPopup({
-      popup: POPUP_PAGE
-    });
+    // The popup can't ask for "tabs" permission
+    // without an explicit user action.
+    //
+    // chrome.browserAction.setPopup({
+    //  popup: POPUP_PAGE
+    // });
 
     chrome.contextMenus.create({
       id: MENU_ID_WATCHLIST,
@@ -61,6 +64,10 @@ chrome.tabs.onActivated.addListener(info => {
 });
 
 chrome.browserAction.onClicked.addListener(async tab => {
+  log('browserAction.onClicked:', tab.id, tab.url);
+  let granted = await requestPermissions();
+  if (!granted) return;
+  tab = await getCurrentTab();
   let srv = await gConfigProps.htmlServerURL.get();
   let params = await gConfigProps.extraUrlParams.get();
   let url = srv + '?' + params + '#' + tab.url;
@@ -79,6 +86,9 @@ async function handleCommentsForLinkMenuItemClick(tab, info) {
 }
 
 async function handleCommentsMenuItemClick(tab) {
+  let granted = await requestPermissions();
+  if (!granted) return;
+  tab = await getCurrentTab();
   await openNewTabWithComments(tab.url);
 }
 
@@ -108,7 +118,13 @@ function scheduleCurrentTabStatusUpdate() {
 async function updateCurrentTabStatus() {
   let time = Date.now();
   let tab = await getCurrentTab();
-  log('tab:', tab.id, JSON.stringify(tab.url));
+
+  if (!tab || !tab.url) {
+    log('tab.url=null. No permissions?');
+    return;
+  }
+
+  log('tab:', tab.id, 'url:', JSON.stringify(tab.url));
 
   try {
     await setIconColor(

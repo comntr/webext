@@ -24,9 +24,11 @@
     ]
   }, 
   "permissions": [
-    "https://comntr.live:*/*",
     "contextMenus",
-    "tabs",
     "storage"
+  ],
+  "optional_permissions": [
+    "tabs",
+    "https://comntr.live:*/*"
   ]
 }
